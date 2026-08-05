@@ -103,7 +103,7 @@ GAMES = [
     {
         "key": "guess_word",
         "endpoint": "play_guess_word",
-        "title": "Gisele's Guess",
+        "title": "Gisele's Word Melt",
         "desc": "限次數猜出神秘單字！每次猜完有提示，睇下你要幾多次先估到。",
         "tags": ["估字", "英文"],
         "cover": "guess_word_cover.png",
