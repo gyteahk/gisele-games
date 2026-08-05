@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gisele's Games</title>
+
+<!-- iPad "Add to Home Screen" 全螢幕 App 感 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gisele's Games">
+<meta name="theme-color" content="#7B5CFF">
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icon-192.png') }}">
+<link rel="icon" href="{{ url_for('static', filename='img/icon-192.png') }}">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="nav">
+  <a class="brand" href="{{ url_for('index') }}">✨ Gisele's<span class="dot">Games</span></a>
+  <div class="nav-right">
+    {% if user %}
+      <a class="points-chip" href="{{ url_for('leaderboard') }}">⭐ {{ points }}</a>
+      <a class="nav-link" href="{{ url_for('logout') }}">登出</a>
+    {% else %}
+      <a class="nav-link" href="{{ url_for('login') }}">登入</a>
+      <a class="btn coral small" href="{{ url_for('register') }}"><span>Register</span></a>
+    {% endif %}
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-burst"></div>
+    <div class="title">GISELE'S<br><span class="accent">GAMES</span></div>
+    <p class="tagline">一齊嚟玩小遊戲：夠快、夠聰明、夠穩陣先過關！</p>
+  </div>
+
+  <div class="grid">
+    {% for g in games %}
+    <a class="card" href="{{ url_for(g.endpoint) }}">
+      <img class="card-cover" src="{{ url_for('static', filename='img/covers/' + g.cover) }}" alt="{{ g.title }}">
+      <div class="card-body">
+        <h3>{{ g.title }}</h3>
+        <p>{{ g.desc }}</p>
+        <div class="tag-row">{% for t in g.tags %}<span class="tag">{{ t }}</span>{% endfor %}</div>
+        <div class="play-cta"><span>開始玩</span><span class="arrow">→</span></div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <div class="footer">Made with 💜 for Gisele</div>
+</div>
+
+<div class="win-overlay" id="welcomeOverlay" hidden>
+  <div class="win-card welcome-card">
+    <img src="{{ url_for('static', filename='img/art/welcome.jpg') }}" alt="Welcome to my game!" class="welcome-art">
+    <button type="button" class="btn coral" id="btnEnterApp"><span>開始玩</span></button>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var overlay = document.getElementById("welcomeOverlay");
+    // Show once per browser session (tab/app launch) — not every time you
+    // come back to the homepage after playing a game, or it gets old fast.
+    if (!sessionStorage.getItem("welcomeShown")) {
+      overlay.hidden = false;
+      sessionStorage.setItem("welcomeShown", "1");
+    }
+    document.getElementById("btnEnterApp").addEventListener("click", function () {
+      overlay.hidden = true;
+    });
+  })();
+</script>
+<script src="{{ url_for('static', filename='js/register-sw.js') }}"></script>
+</body>
+</html>

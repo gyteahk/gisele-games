@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>排行榜 · Gisele's Games</title>
+<meta name="theme-color" content="#7B5CFF">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<nav class="nav">
+  <a class="brand" href="{{ url_for('index') }}">✨ Gisele's<span class="dot">Games</span></a>
+  <div class="nav-right">
+    <a class="points-chip" href="{{ url_for('leaderboard') }}">⭐ {{ points }}</a>
+    <a class="nav-link" href="{{ url_for('logout') }}">登出</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-burst"></div>
+    <div class="title" style="font-size:clamp(28px,6vw,48px);">排行榜</div>
+    <p class="tagline">同朋友互相比較，睇下邊個分最多！</p>
+  </div>
+
+  <div class="panel" style="max-width:560px; margin:0 auto 40px;">
+    <h2>總分排名</h2>
+    {% if rows %}
+    <div style="overflow-x:auto;">
+    <table class="lb-table">
+      <thead><tr><th>#</th><th>玩家</th><th>總分</th><th>徽章</th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr class="{{ 'me' if r.id == user.id else '' }}">
+          <td>{% if loop.index == 1 %}<span class="lb-medal">🥇</span>{% elif loop.index == 2 %}<span class="lb-medal">🥈</span>{% elif loop.index == 3 %}<span class="lb-medal">🥉</span>{% else %}{{ loop.index }}{% endif %}</td>
+          <td>{{ r.name }}</td>
+          <td class="num">{{ r.total }}</td>
+          <td>{{ r.badge_count }} 🏅</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="sub">未有人玩過，快啲去玩下攞第一名！</p>
+    {% endif %}
+  </div>
+
+  {% if badges %}
+  <div class="panel" style="max-width:560px; margin:0 auto 40px;">
+    <h2>我嘅成就</h2>
+    <div class="tag-row" style="margin-top:10px;">
+      {% for b in badges %}
+        <span class="tag">{{ b }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="footer"><a href="{{ url_for('index') }}">← 返去主頁</a></div>
+</div>
+<script src="{{ url_for('static', filename='js/register-sw.js') }}"></script>
+</body>
+</html>

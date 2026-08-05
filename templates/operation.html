@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Gisele's Operation</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1FCFC0">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/operation.css') }}">
+</head>
+<body class="op-page">
+<nav class="nav">
+  <a class="brand" href="{{ url_for('index') }}">✨ Gisele's<span class="dot">Games</span></a>
+  <div class="nav-right">
+    <a class="points-chip" href="{{ url_for('leaderboard') }}">⭐ {{ points }}</a>
+    <a class="nav-link" href="{{ url_for('logout') }}">登出</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-burst"></div>
+    <div class="title op-title">GISELE'S<br><span class="accent">OPERATION</span></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="seg" role="group" aria-label="難度">
+      <button type="button" class="diff-easy" data-difficulty="easy">易</button>
+      <button type="button" class="active diff-medium" data-difficulty="medium">中</button>
+      <button type="button" class="diff-hard" data-difficulty="hard">難</button>
+    </div>
+    <button type="button" class="icon-btn" id="btnNewPath">🔀 換一條路</button>
+  </div>
+
+  <div class="hud">
+    <span class="chip">⏱ <span id="hudTime">00:00</span></span>
+    <span class="chip">❤️ 剩 <span id="hudLives">5 / 5</span></span>
+  </div>
+
+  <p class="hint">由起點開始，沿住條路拖去紅十字，唔可以掂到邊，掂到會扣命</p>
+
+  <div class="op-center" id="opCenter">
+    <div class="op-stage" id="opStage">
+      <canvas id="opCanvas"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="win-overlay" id="resultOverlay" hidden>
+  <div class="win-card welcome-card">
+    <img class="welcome-art" id="resultArt" src="" alt="">
+    <p id="resultMsg"></p>
+    <div class="win-actions">
+      <button type="button" class="btn coral" id="btnPlayAgain"><span>再嚟一次</span></button>
+      <a class="btn ghost small" href="{{ url_for('index') }}"><span>返去主頁</span></a>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/operation.js') }}"></script>
+<script src="{{ url_for('static', filename='js/register-sw.js') }}"></script>
+</body>
+</html>

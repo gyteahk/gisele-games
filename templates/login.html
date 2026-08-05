@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>登入 · Gisele's Games</title>
+<meta name="theme-color" content="#7B5CFF">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<nav class="nav">
+  <a class="brand" href="{{ url_for('index') }}">✨ Gisele's<span class="dot">Games</span></a>
+</nav>
+
+<div class="auth-wrap">
+  <div class="panel">
+    <h2>登入</h2>
+    <p class="sub">入返嚟繼續玩、儲分！</p>
+
+    {% for msg in get_flashed_messages() %}
+      <div class="flash">{{ msg }}</div>
+    {% endfor %}
+
+    <form method="post">
+      <div class="field">
+        <label for="email">電郵</label>
+        <input type="email" id="email" name="email" value="{{ email }}" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">密碼</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <button type="submit" class="btn coral"><span>登入</span></button>
+    </form>
+
+    <p class="switch-line">
+      未有帳戶？<a href="{{ url_for('register') }}">Register</a><br>
+      忘記密碼？<a href="{{ url_for('forgot_password') }}">重設密碼</a>
+    </p>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/register-sw.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "Gisele's Games",
+  "short_name": "Gisele's Games",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FFF8EC",
+  "theme_color": "#7B5CFF",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/static/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/static/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/static/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/static/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
