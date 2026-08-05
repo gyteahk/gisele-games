@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Gisele's Tic-Tac-Toe</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#FFC93C">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tictactoe.css') }}">
+</head>
+<body class="ttt-page">
+<nav class="nav">
+  <a class="brand" href="{{ url_for('index') }}">✨ Gisele's<span class="dot">Games</span></a>
+  <div class="nav-right">
+    <a class="points-chip" href="{{ url_for('leaderboard') }}">⭐ {{ points }}</a>
+    <a class="nav-link" href="{{ url_for('logout') }}">登出</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-burst"></div>
+    <div class="title ttt-title">GISELE'S<br><span class="accent">TIC-TAC-TOE</span></div>
+  </div>
+
+  <div class="ttt-chooser" id="tttChooser">
+    <p class="ttt-chooser-hint">揀一個對手開始對戰：</p>
+    <div class="ttt-opponents">
+      <button type="button" class="ttt-opp-card" data-difficulty="easy">
+        <img src="{{ url_for('static', filename='img/ttt_avatars/easy_bunny.png') }}" alt="傻兔仔" class="ttt-opp-avatar">
+        <span class="ttt-opp-name">傻兔仔</span>
+        <span class="ttt-opp-tag">易</span>
+      </button>
+      <button type="button" class="ttt-opp-card" data-difficulty="medium">
+        <img src="{{ url_for('static', filename='img/ttt_avatars/medium_fox.png') }}" alt="聰明狐狸" class="ttt-opp-avatar">
+        <span class="ttt-opp-name">聰明狐狸</span>
+        <span class="ttt-opp-tag">中</span>
+      </button>
+      <button type="button" class="ttt-opp-card" data-difficulty="hard">
+        <img src="{{ url_for('static', filename='img/ttt_avatars/hard_dragon.png') }}" alt="神級小龍" class="ttt-opp-avatar">
+        <span class="ttt-opp-name">神級小龍</span>
+        <span class="ttt-opp-tag">難</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="ttt-play" id="tttPlay" hidden>
+    <div class="ttt-vs">
+      <img id="tttOppAvatar" class="ttt-vs-avatar" src="" alt="">
+      <span id="tttOppName" class="ttt-vs-name"></span>
+      <button type="button" class="icon-btn" id="btnChangeOpp">🔄 換對手</button>
+    </div>
+    <div class="ttt-board" id="tttBoard"></div>
+  </div>
+</div>
+
+<div class="win-overlay" id="resultOverlay" hidden>
+  <div class="win-card welcome-card">
+    <img class="welcome-art" id="resultArt" src="" alt="">
+    <p id="resultMsg"></p>
+    <div class="win-actions">
+      <button type="button" class="btn coral" id="btnPlayAgain"><span>再嚟一局</span></button>
+      <a class="btn ghost small" href="{{ url_for('index') }}"><span>返去主頁</span></a>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/tictactoe.js') }}"></script>
+<script src="{{ url_for('static', filename='js/register-sw.js') }}"></script>
+</body>
+</html>

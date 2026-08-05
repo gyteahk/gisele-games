@@ -81,6 +81,13 @@ OPERATION_POINTS = {"easy": 15, "medium": 25, "hard": 35}
 OPERATION_DIFFICULTIES = set(OPERATION_POINTS)
 OPERATION_MAX_LIVES = 5
 
+TTT_POINTS = {
+    "easy": {"win": 5, "draw": 2, "lose": 0},
+    "medium": {"win": 12, "draw": 5, "lose": 0},
+    "hard": {"win": 30, "draw": 15, "lose": 0},
+}
+TTT_DIFFICULTIES = set(TTT_POINTS)
+
 BADGE_LABELS = {
     "first_win": "🎉 初次過關",
     "maze_hard_win": "🌀 攻破高難度迷宮",
@@ -89,6 +96,8 @@ BADGE_LABELS = {
     "marathon": "🏃 長字馬拉松",
     "steady_hand": "🖐 穩定嘅手",
     "surgeon": "🩺 神級醫生",
+    "fox_outsmarted": "🦊 打敗聰明狐狸",
+    "dragon_tamer": "🐉 馴服神級小龍",
 }
 
 GAMES = [
@@ -115,6 +124,14 @@ GAMES = [
         "desc": "手要穩！沿住彎彎曲曲嘅路拖去終點，唔可以掂到邊，睇下你捱唔捱到到尾。",
         "tags": ["考眼界", "手穩挑戰"],
         "cover": "operation_cover.jpg",
+    },
+    {
+        "key": "tictactoe",
+        "endpoint": "play_tictactoe",
+        "title": "Gisele's Tic-Tac-Toe",
+        "desc": "揀傻兔仔、聰明狐狸或者神級小龍對戰，砌成一條線就贏！難度愈高，分數愈高。",
+        "tags": ["棋類", "鬥智"],
+        "cover": "tictactoe_cover.png",
     },
 ]
 
@@ -532,6 +549,12 @@ def play_operation():
     return render_template("operation.html")
 
 
+@app.route("/games/tictactoe")
+@login_required_page
+def play_tictactoe():
+    return render_template("tictactoe.html")
+
+
 @app.route("/leaderboard")
 @login_required_page
 def leaderboard():
@@ -693,6 +716,56 @@ def api_operation_finish():
         if difficulty == "hard":
             award_badge(db, user["id"], "surgeon")
             new_badges.append("surgeon")
+
+    return jsonify({
+        "points_awarded": points,
+        "total_points": get_total_points(db, user["id"]),
+        "new_badges": [BADGE_LABELS.get(b, b) for b in new_badges],
+    })
+
+
+@app.route("/api/tictactoe/finish", methods=["POST"])
+@login_required_api
+def api_tictactoe_finish():
+    data = request.get_json(silent=True) or {}
+    difficulty = data.get("difficulty")
+    outcome = data.get("outcome")
+    moves = data.get("moves")
+
+    if difficulty not in TTT_DIFFICULTIES:
+        return jsonify({"error": "bad_difficulty"}), 400
+    if outcome not in ("win", "draw", "lose"):
+        return jsonify({"error": "bad_outcome"}), 400
+    try:
+        moves = max(0, int(moves))
+    except (TypeError, ValueError):
+        return jsonify({"error": "bad_metrics"}), 400
+
+    db = get_db()
+    user = current_user()
+    won = outcome == "win"
+    points = TTT_POINTS[difficulty][outcome]
+    is_first_win_ever = won and not has_any_win(db, user["id"])
+
+    db.execute(
+        "INSERT INTO results(user_id, game, difficulty, steps, won, points, created_at) "
+        "VALUES (?,?,?,?,?,?,?)",
+        (user["id"], "tictactoe", difficulty, moves, int(won), points, now_iso()),
+    )
+    db.commit()
+
+    new_badges = []
+    if points > 0:
+        award_points(db, user["id"], points, f"tictactoe_{outcome}:{difficulty}")
+    if won and is_first_win_ever:
+        award_badge(db, user["id"], "first_win")
+        new_badges.append("first_win")
+    if won and difficulty == "medium":
+        award_badge(db, user["id"], "fox_outsmarted")
+        new_badges.append("fox_outsmarted")
+    if difficulty == "hard" and outcome in ("win", "draw"):
+        award_badge(db, user["id"], "dragon_tamer")
+        new_badges.append("dragon_tamer")
 
     return jsonify({
         "points_awarded": points,

@@ -1,0 +1,86 @@
+.ttt-page .hero{padding:10px 0 2px;}
+.ttt-page .hero-burst{display:none;}
+.ttt-title{font-size:clamp(16px,3.2vw,26px);}
+
+.ttt-chooser-hint{
+  text-align:center; color:var(--muted); font-weight:700; font-size:14px;
+  margin:0 0 14px;
+}
+
+.ttt-opponents{
+  display:flex; justify-content:center; gap:16px; flex-wrap:wrap;
+  margin-bottom:20px;
+}
+
+.ttt-opp-card{
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  background:var(--panel); border:3px solid var(--ink); border-radius:16px;
+  padding:12px 18px; cursor:pointer;
+  box-shadow:4px 4px 0 rgba(26,18,53,0.18);
+  transition:transform .08s;
+  font-family:inherit;
+}
+.ttt-opp-card:active{transform:translate(2px,2px); box-shadow:1px 1px 0 rgba(26,18,53,0.18);}
+
+.ttt-opp-avatar{
+  width:72px; height:72px; border-radius:50%; object-fit:cover;
+  border:3px solid var(--ink);
+}
+.ttt-opp-card[data-difficulty="easy"] .ttt-opp-avatar{background:var(--pop-teal);}
+.ttt-opp-card[data-difficulty="medium"] .ttt-opp-avatar{background:var(--gold);}
+.ttt-opp-card[data-difficulty="hard"] .ttt-opp-avatar{background:var(--pop-purple);}
+
+.ttt-opp-name{font-weight:800; color:var(--ink); font-size:14px;}
+.ttt-opp-tag{
+  font-weight:800; font-size:12px; padding:2px 10px; border-radius:999px;
+  background:var(--cream); border:2px solid var(--ink);
+}
+
+.ttt-vs{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  margin-bottom:14px; flex-wrap:wrap;
+}
+.ttt-vs-avatar{
+  width:40px; height:40px; border-radius:50%; object-fit:cover;
+  border:2.5px solid var(--ink);
+}
+.ttt-vs-name{font-weight:800; color:var(--ink); font-size:14px;}
+
+.ttt-board{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  grid-template-rows:repeat(3, 1fr);
+  gap:8px;
+  width:min(88vw, 320px);
+  aspect-ratio:1;
+  margin:0 auto;
+}
+.ttt-cell{
+  border:3px solid var(--ink); border-radius:14px;
+  background:var(--panel);
+  display:flex; align-items:center; justify-content:center;
+  font-family:"Arial Black","Segoe UI Black",Impact,sans-serif;
+  font-weight:900;
+  font-size:clamp(28px,10vw,52px);
+  color:var(--ink);
+  cursor:pointer;
+  padding:0;
+  transition:transform .1s;
+}
+.ttt-cell:active{transform:scale(.94);}
+.ttt-cell.disabled{cursor:default;}
+.ttt-cell.x{color:var(--pop-coral-dark);}
+.ttt-cell.o{color:var(--pop-teal-dark);}
+.ttt-cell.pop{animation:tttPop .25s ease;}
+@keyframes tttPop{
+  0%{transform:scale(.55);}
+  100%{transform:scale(1);}
+}
+@media (prefers-reduced-motion: reduce){
+  .ttt-cell.pop{animation:none;}
+}
+
+@media (orientation: landscape){
+  .ttt-opponents{margin-bottom:12px;}
+  .ttt-chooser-hint{margin-bottom:10px;}
+}
