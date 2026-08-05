@@ -2,6 +2,27 @@
 .gw-page .hero-burst{display:none;}
 .gw-title{font-size:clamp(18px,3.6vw,28px);}
 
+.gw-snowman{
+  width:64px; height:93px;
+  margin:0 auto 4px;
+}
+.sw-part{
+  transition:opacity .45s ease, transform .45s ease;
+  transform-origin:50% 100%;
+}
+.sw-part.sw-hidden{
+  opacity:0;
+  transform:translateY(6px) scale(.85);
+}
+.sw-puddle{
+  opacity:0;
+  transition:opacity .45s ease;
+}
+.sw-puddle.sw-show{opacity:1;}
+@media (prefers-reduced-motion: reduce){
+  .sw-part, .sw-puddle{transition:none;}
+}
+
 .gw-category{
   text-align:center; color:var(--muted); font-weight:700; font-size:13px;
   margin:0 0 10px;

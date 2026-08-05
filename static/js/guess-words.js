@@ -79,6 +79,8 @@
   var keyboard = document.getElementById("keyboard");
   var categoryLabel = document.getElementById("categoryLabel");
   var hudGuesses = document.getElementById("hudGuesses");
+  var swPuddle = document.getElementById("swPuddle");
+  var SNOWMAN_PARTS = ["swHat", "swNose", "swArmL", "swArmR", "swEyes", "swButtons", "swHead", "swBody"];
   var resultOverlay = document.getElementById("resultOverlay");
   var resultArt = document.getElementById("resultArt");
   var resultMsg = document.getElementById("resultMsg");
@@ -236,6 +238,19 @@
 
   function updateHud() {
     hudGuesses.textContent = state.livesLeft + " / " + MAX_LIVES;
+    updateSnowman();
+  }
+
+  function updateSnowman() {
+    var meltedCount = MAX_LIVES - state.livesLeft;
+    SNOWMAN_PARTS.forEach(function (id, idx) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (idx < meltedCount) el.classList.add("sw-hidden");
+      else el.classList.remove("sw-hidden");
+    });
+    if (meltedCount >= SNOWMAN_PARTS.length) swPuddle.classList.add("sw-show");
+    else swPuddle.classList.remove("sw-show");
   }
 
   // ---------------- game flow ----------------
