@@ -1,4 +1,4 @@
-var CACHE_NAME = "gisele-games-v4";
+var CACHE_NAME = "gisele-games-v5";
 
 var PRECACHE_URLS = [
   "/static/css/style.css",
