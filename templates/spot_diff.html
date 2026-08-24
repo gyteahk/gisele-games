@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Gisele's Spot the Difference</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#7B5CFF">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/spot-diff.css') }}">
+</head>
+<body class="spot-page">
+<nav class="nav">
+  <a class="brand" href="{{ url_for('index') }}">✨ Gisele's<span class="dot">Games</span></a>
+  <div class="nav-right">
+    <a class="points-chip" href="{{ url_for('leaderboard') }}">⭐ {{ points }}</a>
+    <a class="nav-link" href="{{ url_for('logout') }}">登出</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-burst"></div>
+    <div class="title spot-title">GISELE'S<br><span class="accent">SPOT THE DIFF</span></div>
+  </div>
+
+  <div class="toolbar">
+    <button type="button" class="icon-btn" id="btnNewLevel">🔀 換一關</button>
+  </div>
+
+  <div class="hud">
+    <span class="chip">🔍 揾到 <span id="hudFound">0 / 5</span></span>
+    <span class="chip">❌ 剩 <span id="hudStrikes">3 / 3</span></span>
+  </div>
+
+  <p class="spot-category" id="levelLabel"></p>
+
+  <div class="spot-stage" id="spotStage">
+    <div class="spot-frame" id="frameA">
+      <img id="imgA" src="" alt="原圖">
+    </div>
+    <div class="spot-frame" id="frameB">
+      <img id="imgB" src="" alt="有分別嘅圖">
+    </div>
+  </div>
+</div>
+
+<div class="win-overlay" id="resultOverlay" hidden>
+  <div class="win-card welcome-card">
+    <img class="welcome-art" id="resultArt" src="" alt="">
+    <p id="resultMsg"></p>
+    <div class="win-actions">
+      <button type="button" class="btn coral" id="btnPlayAgain"><span>再嚟一關</span></button>
+      <a class="btn ghost small" href="{{ url_for('index') }}"><span>返去主頁</span></a>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/spot-diff-data.js') }}"></script>
+<script src="{{ url_for('static', filename='js/spot-diff.js') }}"></script>
+<script src="{{ url_for('static', filename='js/register-sw.js') }}"></script>
+</body>
+</html>

@@ -88,6 +88,9 @@ TTT_POINTS = {
 }
 TTT_DIFFICULTIES = set(TTT_POINTS)
 
+SPOT_MAX_STRIKES = 3
+SPOT_DIFF_COUNT = 5
+
 BADGE_LABELS = {
     "first_win": "🎉 初次過關",
     "maze_hard_win": "🌀 攻破高難度迷宮",
@@ -98,6 +101,7 @@ BADGE_LABELS = {
     "surgeon": "🩺 神級醫生",
     "fox_outsmarted": "🦊 打敗聰明狐狸",
     "dragon_tamer": "🐉 馴服神級小龍",
+    "eagle_eye": "🦅 鷹眼搜查",
 }
 
 GAMES = [
@@ -132,6 +136,14 @@ GAMES = [
         "desc": "揀傻兔仔、聰明狐狸或者神級小龍對戰，砌成一條線就贏！難度愈高，分數愈高。",
         "tags": ["棋類", "鬥智"],
         "cover": "tictactoe_cover.png",
+    },
+    {
+        "key": "spot_diff",
+        "endpoint": "play_spot_diff",
+        "title": "Gisele's Spot the Difference",
+        "desc": "兩張圖睇落一樣，其實藏住5個唔同！揾晒佢哋，睇下你嘅眼力夠唔夠尖。",
+        "tags": ["觀察力", "眼明手快"],
+        "cover": "spot_diff_cover.png",
     },
 ]
 
@@ -555,6 +567,12 @@ def play_tictactoe():
     return render_template("tictactoe.html")
 
 
+@app.route("/games/spot-diff")
+@login_required_page
+def play_spot_diff():
+    return render_template("spot_diff.html")
+
+
 @app.route("/leaderboard")
 @login_required_page
 def leaderboard():
@@ -766,6 +784,50 @@ def api_tictactoe_finish():
     if difficulty == "hard" and outcome in ("win", "draw"):
         award_badge(db, user["id"], "dragon_tamer")
         new_badges.append("dragon_tamer")
+
+    return jsonify({
+        "points_awarded": points,
+        "total_points": get_total_points(db, user["id"]),
+        "new_badges": [BADGE_LABELS.get(b, b) for b in new_badges],
+    })
+
+
+@app.route("/api/spot-diff/finish", methods=["POST"])
+@login_required_api
+def api_spot_diff_finish():
+    data = request.get_json(silent=True) or {}
+    level_key = data.get("level_key")
+    strikes_left = data.get("strikes_left")
+    won = bool(data.get("won"))
+
+    if not level_key or not isinstance(level_key, str):
+        return jsonify({"error": "bad_level"}), 400
+    try:
+        strikes_left = max(0, min(SPOT_MAX_STRIKES, int(strikes_left)))
+    except (TypeError, ValueError):
+        return jsonify({"error": "bad_metrics"}), 400
+
+    db = get_db()
+    user = current_user()
+    points = 20 + strikes_left * 5 if won else 0
+    is_first_win_ever = won and not has_any_win(db, user["id"])
+
+    db.execute(
+        "INSERT INTO results(user_id, game, difficulty, lives_left, won, points, created_at) "
+        "VALUES (?,?,?,?,?,?,?)",
+        (user["id"], "spot_diff", level_key, strikes_left, int(won), points, now_iso()),
+    )
+    db.commit()
+
+    new_badges = []
+    if won:
+        award_points(db, user["id"], points, f"spot_diff_win:{level_key}")
+        if is_first_win_ever:
+            award_badge(db, user["id"], "first_win")
+            new_badges.append("first_win")
+        if strikes_left == SPOT_MAX_STRIKES:
+            award_badge(db, user["id"], "eagle_eye")
+            new_badges.append("eagle_eye")
 
     return jsonify({
         "points_awarded": points,

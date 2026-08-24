@@ -1,0 +1,83 @@
+.spot-page .hero{padding:10px 0 2px;}
+.spot-page .hero-burst{display:none;}
+.spot-title{font-size:clamp(16px,3.2vw,26px);}
+
+.spot-category{
+  text-align:center; color:var(--muted); font-weight:700; font-size:13px;
+  margin:0 0 12px;
+}
+.spot-category b{color:var(--pop-purple-dark);}
+
+.spot-stage{
+  display:flex; flex-wrap:wrap; justify-content:center; align-items:flex-start;
+  gap:14px; padding-bottom:24px;
+}
+.spot-frame{
+  position:relative;
+  width:min(44vw, 420px);
+  max-width:100%;
+  border:3px solid var(--ink);
+  border-radius:16px;
+  overflow:hidden;
+  background:var(--panel);
+  box-shadow:4px 4px 0 rgba(26,18,53,0.18);
+  line-height:0;
+  cursor:crosshair;
+  touch-action:manipulation;
+}
+.spot-frame img{
+  display:block; width:100%; height:auto; user-select:none; -webkit-user-drag:none;
+}
+@media (max-width: 560px){
+  .spot-stage{flex-direction:column; align-items:center;}
+  .spot-frame{width:92vw;}
+}
+
+.spot-marker{
+  position:absolute;
+  width:14%; height:14%;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  pointer-events:none;
+  font-weight:900;
+  font-size:clamp(14px,3vw,22px);
+}
+.spot-marker.found{
+  background:rgba(31,207,192,0.28);
+  border:3px solid var(--pop-teal-dark);
+  color:var(--pop-teal-dark);
+  animation:spotPop .3s ease;
+}
+.spot-marker.miss{
+  background:rgba(255,93,115,0.28);
+  border:3px solid var(--pop-coral-dark);
+  color:var(--pop-coral-dark);
+  width:11%; height:11%;
+  animation:spotMiss .5s ease forwards;
+}
+@keyframes spotPop{
+  0%{transform:translate(-50%,-50%) scale(.4); opacity:0;}
+  60%{transform:translate(-50%,-50%) scale(1.15); opacity:1;}
+  100%{transform:translate(-50%,-50%) scale(1); opacity:1;}
+}
+@keyframes spotMiss{
+  0%{transform:translate(-50%,-50%) scale(.6); opacity:1;}
+  70%{opacity:1;}
+  100%{transform:translate(-50%,-50%) scale(1); opacity:0;}
+}
+@media (prefers-reduced-motion: reduce){
+  .spot-marker.found, .spot-marker.miss{animation:none;}
+}
+
+.spot-frame.shake{animation:spotShake .3s ease;}
+@keyframes spotShake{
+  0%,100%{transform:translateX(0);}
+  25%{transform:translateX(-5px);}
+  75%{transform:translateX(5px);}
+}
+
+@media (orientation: landscape){
+  .spot-category{margin-bottom:8px;}
+  .spot-stage{padding-bottom:14px;}
+}
