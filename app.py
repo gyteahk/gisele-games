@@ -153,8 +153,8 @@ GAMES = [
         "key": "diamond_hacher",
         "endpoint": "play_diamond_hacher",
         "title": "Diamond Hacher",
-        "desc": "兩個玩家一齊偷走小魔女手袋入面嘅鑽石！佢睇緊就唔好撳，一轉頭就快啲偷。第一個偷到10粒鑽石嘅人贏！",
-        "tags": ["雙人", "眼明手快"],
+        "desc": "Hacher 手袋漏出閃閃鑽石！快啲撳住偷走，唔好俾佢執返。第一個到10粒就贏！",
+        "tags": ["對戰電腦", "眼明手快"],
         "cover": "diamond_hacher_cover.jpg",
     },
 ]
@@ -859,45 +859,47 @@ def api_spot_diff_finish():
 def api_diamond_hacher_finish():
     data = request.get_json(silent=True) or {}
     winner = data.get("winner")
-    p1_score = data.get("p1_score")
-    p2_score = data.get("p2_score")
+    player_score = data.get("player_score")
+    hacher_score = data.get("hacher_score")
 
-    if winner not in ("p1", "p2"):
+    if winner not in ("player", "hacher"):
         return jsonify({"error": "bad_winner"}), 400
     try:
-        p1_score = max(0, min(DIAMOND_HACHER_GOAL, int(p1_score)))
-        p2_score = max(0, min(DIAMOND_HACHER_GOAL, int(p2_score)))
+        player_score = max(0, min(DIAMOND_HACHER_GOAL, int(player_score)))
+        hacher_score = max(0, min(DIAMOND_HACHER_GOAL, int(hacher_score)))
     except (TypeError, ValueError):
         return jsonify({"error": "bad_metrics"}), 400
-    if (winner == "p1" and p1_score < DIAMOND_HACHER_GOAL) or (
-        winner == "p2" and p2_score < DIAMOND_HACHER_GOAL
+    if (winner == "player" and player_score < DIAMOND_HACHER_GOAL) or (
+        winner == "hacher" and hacher_score < DIAMOND_HACHER_GOAL
     ):
         return jsonify({"error": "winner_score"}), 400
 
     db = get_db()
     user = current_user()
-    points = DIAMOND_HACHER_POINTS
-    is_first_win_ever = not has_any_win(db, user["id"])
+    won = winner == "player"
+    points = DIAMOND_HACHER_POINTS if won else 0
+    is_first_win_ever = won and not has_any_win(db, user["id"])
 
     db.execute(
         "INSERT INTO results(user_id, game, difficulty, steps, lives_left, won, points, created_at) "
         "VALUES (?,?,?,?,?,?,?,?)",
-        (user["id"], "diamond_hacher", winner, p1_score, p2_score, 1, points, now_iso()),
+        (user["id"], "diamond_hacher", winner, player_score, hacher_score, int(won), points, now_iso()),
     )
     db.commit()
 
     new_badges = []
-    award_points(db, user["id"], points, f"diamond_hacher_win:{winner}")
-    if is_first_win_ever:
-        award_badge(db, user["id"], "first_win")
-        new_badges.append("first_win")
-    had_thief = db.execute(
-        "SELECT 1 FROM badges WHERE user_id=? AND badge_key=? LIMIT 1",
-        (user["id"], "diamond_thief"),
-    ).fetchone()
-    award_badge(db, user["id"], "diamond_thief")
-    if not had_thief:
-        new_badges.append("diamond_thief")
+    if won:
+        award_points(db, user["id"], points, "diamond_hacher_win")
+        if is_first_win_ever:
+            award_badge(db, user["id"], "first_win")
+            new_badges.append("first_win")
+        had_thief = db.execute(
+            "SELECT 1 FROM badges WHERE user_id=? AND badge_key=? LIMIT 1",
+            (user["id"], "diamond_thief"),
+        ).fetchone()
+        award_badge(db, user["id"], "diamond_thief")
+        if not had_thief:
+            new_badges.append("diamond_thief")
 
     return jsonify({
         "points_awarded": points,

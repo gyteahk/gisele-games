@@ -2,7 +2,7 @@
   "use strict";
 
   var GOAL = 10;
-  var PURSE_START = 20;
+  var MAX_LIVE = 3;
   var POSES = {
     watching: "/static/img/diamond_hacher/watching.jpg",
     distracted: "/static/img/diamond_hacher/distracted.jpg",
@@ -10,40 +10,41 @@
     caught: "/static/img/diamond_hacher/caught.jpg"
   };
   var LINES = {
-    watching: "我睇實啦！唔准偷！",
-    distracted: "啦啦啦～鑽石好閃呀",
-    angry: "哼！還我鑽石！",
-    caught: "捉到你啦！嘿嘿！"
+    idle: "啦啦啦～鑽石好閃呀",
+    drop: "哎呀手袋漏咗！",
+    steal: "哼！還我鑽石！",
+    notice: "呢粒係我嘅！",
+    grab: "嘿嘿，執返啦！"
   };
 
-  var statusEl = document.getElementById("dhStatus");
-  var bubbleEl = document.getElementById("dhBubble");
+  var scene = document.getElementById("dhScene");
+  var fallEl = document.getElementById("dhFall");
   var girlEl = document.getElementById("dhGirl");
   var girlFrame = document.getElementById("dhGirlFrame");
-  var purseLeftEl = document.getElementById("purseLeft");
+  var girlWrap = document.getElementById("dhGirlWrap");
+  var bubbleEl = document.getElementById("dhBubble");
+  var handEl = document.getElementById("dhHand");
   var startOverlay = document.getElementById("startOverlay");
   var resultOverlay = document.getElementById("resultOverlay");
+  var resultArt = document.getElementById("resultArt");
   var resultTitle = document.getElementById("resultTitle");
   var resultMsg = document.getElementById("resultMsg");
   var countEl = document.getElementById("dhCount");
-  var btnStart = document.getElementById("btnStart");
-  var btnPlayAgain = document.getElementById("btnPlayAgain");
-  var btnP1 = document.getElementById("btnP1");
-  var btnP2 = document.getElementById("btnP2");
-  var gemsP1 = document.getElementById("gemsP1");
-  var gemsP2 = document.getElementById("gemsP2");
-  var countP1 = document.getElementById("countP1");
-  var countP2 = document.getElementById("countP2");
+  var gemsYou = document.getElementById("gemsYou");
+  var gemsGirl = document.getElementById("gemsGirl");
+  var countYou = document.getElementById("countYou");
+  var countGirl = document.getElementById("countGirl");
 
   var state = {
     phase: "idle",
-    scores: { p1: 0, p2: 0 },
-    purse: PURSE_START,
-    stolenThisWindow: false,
-    frozen: { p1: false, p2: false },
-    timer: null,
-    freezeTimers: { p1: null, p2: null },
-    lastStealAt: { p1: 0, p2: 0 }
+    scores: { player: 0, hacher: 0 },
+    gems: [],
+    noticing: null,
+    nextId: 1,
+    raf: 0,
+    lastTs: 0,
+    spawnAt: 0,
+    poseTimer: 0
   };
 
   Object.keys(POSES).forEach(function (key) {
@@ -55,32 +56,15 @@
     return min + Math.random() * (max - min);
   }
 
-  function clearTimer() {
-    if (state.timer) {
-      clearTimeout(state.timer);
-      state.timer = null;
-    }
-  }
-
   function bump(el, className) {
     el.classList.remove(className);
     void el.offsetWidth;
     el.classList.add(className);
   }
 
-  function setPose(pose) {
+  function setPose(pose, line) {
     girlEl.src = POSES[pose];
-    bubbleEl.textContent = LINES[pose];
-  }
-
-  function syncButtons() {
-    var waiting = state.phase === "idle" || state.phase === "countdown" || state.phase === "over";
-    document.body.classList.toggle("dh-can-steal", state.phase === "distracted");
-    [btnP1, btnP2].forEach(function (btn) {
-      var player = btn.dataset.player;
-      btn.classList.toggle("is-wait", waiting);
-      btn.setAttribute("aria-disabled", waiting || state.frozen[player] ? "true" : "false");
-    });
+    if (line) bubbleEl.textContent = line;
   }
 
   function renderGems(container, score, popLast) {
@@ -93,66 +77,201 @@
     }
   }
 
-  function renderScores(popPlayer) {
-    countP1.textContent = String(state.scores.p1);
-    countP2.textContent = String(state.scores.p2);
-    purseLeftEl.textContent = String(state.purse);
-    renderGems(gemsP1, state.scores.p1, popPlayer === "p1");
-    renderGems(gemsP2, state.scores.p2, popPlayer === "p2");
+  function renderScores(who) {
+    countYou.textContent = String(state.scores.player);
+    countGirl.textContent = String(state.scores.hacher);
+    renderGems(gemsYou, state.scores.player, who === "player");
+    renderGems(gemsGirl, state.scores.hacher, who === "hacher");
   }
 
-  function setStatus(kind, text) {
-    statusEl.className = "dh-status " + kind;
-    statusEl.textContent = text;
+  function liveCount() {
+    var n = 0;
+    for (var i = 0; i < state.gems.length; i++) if (!state.gems[i].claimed) n++;
+    return n;
   }
 
-  function freezePlayer(player) {
-    state.frozen[player] = true;
-    var btn = player === "p1" ? btnP1 : btnP2;
-    btn.classList.add("frozen");
-    var action = btn.querySelector(".dh-steal-action");
-    action.textContent = "被捉住！";
-    syncButtons();
-    if (state.freezeTimers[player]) clearTimeout(state.freezeTimers[player]);
-    state.freezeTimers[player] = setTimeout(function () {
-      state.frozen[player] = false;
-      btn.classList.remove("frozen");
-      action.textContent = "偷鑽石！";
-      syncButtons();
-    }, 1300);
+  function placeGem(g) {
+    g.el.style.left = g.x + "%";
+    g.el.style.top = g.y + "%";
   }
 
-  function goWatching() {
-    if (state.phase === "over") return;
-    state.phase = "watching";
-    state.stolenThisWindow = false;
-    setPose("watching");
-    setStatus("watching", "👀 佢睇緊！唔好撳！");
-    syncButtons();
-    clearTimer();
-    state.timer = setTimeout(goDistracted, rand(1300, 2600));
-  }
+  function spawnDiamond(now) {
+    if (state.phase !== "play") return;
+    if (liveCount() >= MAX_LIVE) return;
+    var el = document.createElement("button");
+    el.type = "button";
+    el.className = "dh-gem-fall";
+    el.setAttribute("aria-label", "偷呢粒鑽石");
+    el.innerHTML = '<span class="dh-gem-shape"></span>';
+    fallEl.appendChild(el);
 
-  function goDistracted() {
-    if (state.phase === "over") return;
-    state.phase = "distracted";
-    state.stolenThisWindow = false;
-    setPose("distracted");
-    setStatus("distracted", "✨ 快啲偷！佢唔見！");
+    var noticeIn = rand(700, 1500);
+    var g = {
+      id: state.nextId++,
+      el: el,
+      x: rand(28, 72),
+      y: 34,
+      vx: rand(-10, 10),
+      vy: rand(20, 32),
+      wobble: rand(0, Math.PI * 2),
+      born: now,
+      noticeAt: now + noticeIn,
+      grabAt: now + noticeIn + rand(320, 520),
+      claimed: null
+    };
+    el.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      trySteal(g);
+    });
+    el.addEventListener("click", function (e) {
+      e.preventDefault();
+      trySteal(g);
+    });
+    state.gems.push(g);
+    placeGem(g);
+    girlWrap.classList.add("dropping");
+    setTimeout(function () { girlWrap.classList.remove("dropping"); }, 360);
+    if (state.noticing == null) setPose("distracted", LINES.drop);
     bump(girlFrame, "pop");
-    syncButtons();
-    clearTimer();
-    state.timer = setTimeout(goWatching, rand(800, 1700));
+  }
+
+  function flyAway(g, toX, toY, then) {
+    g.el.classList.add("claimed");
+    g.el.style.left = toX;
+    g.el.style.top = toY;
+    g.el.style.opacity = "0";
+    g.el.style.transform = "translate(-50%, -50%) scale(0.2)";
+    setTimeout(function () {
+      if (g.el && g.el.parentNode) g.el.parentNode.removeChild(g.el);
+      if (then) then();
+    }, 360);
+  }
+
+  function award(who, g) {
+    if (g.claimed || state.phase !== "play") return;
+    g.claimed = who;
+    if (state.noticing === g) {
+      state.noticing = null;
+      handEl.hidden = true;
+    }
+    g.el.classList.remove("noticed");
+    state.scores[who] += 1;
+    renderScores(who);
+
+    if (who === "player") {
+      setPose("angry", LINES.steal);
+      bump(girlFrame, "shake");
+      flyAway(g, "8%", "8%");
+    } else {
+      setPose("caught", LINES.grab);
+      bump(girlFrame, "pop");
+      flyAway(g, "50%", "16%");
+    }
+    clearTimeout(state.poseTimer);
+    state.poseTimer = setTimeout(function () {
+      if (state.phase === "play" && !state.noticing) setPose("distracted", LINES.idle);
+    }, 650);
+
+    if (state.scores[who] >= GOAL) finishGame(who);
+  }
+
+  function trySteal(g) {
+    if (state.phase !== "play" || g.claimed) return;
+    award("player", g);
+  }
+
+  function girlGrab(g) {
+    if (state.phase !== "play" || g.claimed) return;
+    award("hacher", g);
+  }
+
+  function updateHand(g) {
+    if (!g || g.claimed) {
+      handEl.hidden = true;
+      return;
+    }
+    handEl.hidden = false;
+    var rect = scene.getBoundingClientRect();
+    var girlRect = girlFrame.getBoundingClientRect();
+    var gx = ((girlRect.left + girlRect.width / 2) - rect.left) / rect.width * 100;
+    var gy = ((girlRect.bottom) - rect.top) / rect.height * 100;
+    var t = 0.72;
+    handEl.style.left = gx + (g.x - gx) * t + "%";
+    handEl.style.top = gy + (g.y - gy) * t + "%";
+  }
+
+  function updateDiamonds(now, dt) {
+    var noticing = state.noticing;
+    if (noticing && noticing.claimed) {
+      state.noticing = null;
+      noticing = null;
+      handEl.hidden = true;
+    }
+
+    for (var i = 0; i < state.gems.length; i++) {
+      var g = state.gems[i];
+      if (g.claimed) continue;
+      g.wobble += dt * 3;
+      g.x += (g.vx + Math.sin(g.wobble) * 6) * dt;
+      g.y += g.vy * dt;
+      if (g.x < 10) { g.x = 10; g.vx = Math.abs(g.vx); }
+      if (g.x > 90) { g.x = 90; g.vx = -Math.abs(g.vx); }
+      placeGem(g);
+
+      if (!noticing && now >= g.noticeAt) {
+        noticing = g;
+        state.noticing = g;
+        g.el.classList.add("noticed");
+        setPose("watching", LINES.notice);
+      }
+
+      if (now >= g.grabAt || g.y >= 88) {
+        girlGrab(g);
+      }
+    }
+
+    updateHand(state.noticing && !state.noticing.claimed ? state.noticing : null);
+
+    state.gems = state.gems.filter(function (g) {
+      return !g.claimed || g.el.parentNode;
+    });
+  }
+
+  function loop(ts) {
+    if (state.phase !== "play") return;
+    if (!state.lastTs) state.lastTs = ts;
+    var dt = Math.min(0.05, (ts - state.lastTs) / 1000);
+    state.lastTs = ts;
+    updateDiamonds(ts, dt);
+    if (state.phase !== "play") return;
+    if (ts >= state.spawnAt) {
+      spawnDiamond(ts);
+      state.spawnAt = ts + rand(750, 1400);
+    }
+    state.raf = requestAnimationFrame(loop);
+  }
+
+  function stopLoop() {
+    if (state.raf) cancelAnimationFrame(state.raf);
+    state.raf = 0;
   }
 
   function finishGame(winner) {
+    if (state.phase === "over") return;
     state.phase = "over";
-    clearTimer();
-    syncButtons();
-    setPose("angry");
-    setStatus("react", "🎉 " + (winner === "p1" ? "玩家 1" : "玩家 2") + " 偷夠 10 粒！");
-    resultTitle.textContent = (winner === "p1" ? "玩家 1" : "玩家 2") + " 贏咗！";
-    resultMsg.textContent = "玩家 1  " + state.scores.p1 + " 粒  ·  玩家 2  " + state.scores.p2 + " 粒　計分緊…";
+    stopLoop();
+    handEl.hidden = true;
+    state.gems.forEach(function (g) {
+      if (g.el && g.el.parentNode) g.el.parentNode.removeChild(g.el);
+    });
+    state.gems = [];
+    var playerWon = winner === "player";
+    setPose(playerWon ? "angry" : "caught", playerWon ? LINES.steal : LINES.grab);
+    resultArt.src = playerWon ? "/static/img/art/win.jpg" : "/static/img/art/lose.jpg";
+    resultArt.alt = playerWon ? "贏咗！" : "下次一定得！";
+    resultTitle.textContent = playerWon ? "你贏咗！" : "Hacher 贏咗！";
+    resultMsg.textContent = "你  " + state.scores.player + " 粒  ·  Hacher  " + state.scores.hacher + " 粒　計分緊…";
     resultOverlay.hidden = false;
 
     fetch("/api/diamond-hacher/finish", {
@@ -161,13 +280,13 @@
       credentials: "same-origin",
       body: JSON.stringify({
         winner: winner,
-        p1_score: state.scores.p1,
-        p2_score: state.scores.p2
+        player_score: state.scores.player,
+        hacher_score: state.scores.hacher
       })
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        var text = "玩家 1  " + state.scores.p1 + " 粒  ·  玩家 2  " + state.scores.p2 + " 粒";
+        var text = "你  " + state.scores.player + " 粒  ·  Hacher  " + state.scores.hacher + " 粒";
         if (typeof data.points_awarded === "number") text += "　+" + data.points_awarded + " 分";
         if (data.new_badges && data.new_badges.length) text += " · 新徽章 " + data.new_badges.join(" ");
         resultMsg.textContent = text;
@@ -175,66 +294,11 @@
         if (chip && typeof data.total_points === "number") chip.textContent = "⭐ " + data.total_points;
       })
       .catch(function () {
-        resultMsg.textContent = "玩家 1  " + state.scores.p1 + " 粒  ·  玩家 2  " + state.scores.p2 + " 粒";
+        resultMsg.textContent = "你  " + state.scores.player + " 粒  ·  Hacher  " + state.scores.hacher + " 粒";
       });
   }
 
-  function trySteal(player) {
-    if (state.phase !== "watching" && state.phase !== "distracted") return;
-    if (state.frozen[player]) return;
-    var now = Date.now();
-    if (now - state.lastStealAt[player] < 180) return;
-    state.lastStealAt[player] = now;
-
-    if (state.phase === "distracted") {
-      if (state.stolenThisWindow) return;
-      if (state.purse <= 0) return;
-      state.stolenThisWindow = true;
-      state.scores[player] += 1;
-      state.purse -= 1;
-      renderScores(player);
-      setPose("angry");
-      setStatus("react", player === "p1" ? "💎 玩家 1 偷到一粒！" : "💎 玩家 2 偷到一粒！");
-      bump(girlFrame, "pop");
-      if (state.scores[player] >= GOAL) {
-        finishGame(player);
-        return;
-      }
-      state.phase = "react";
-      syncButtons();
-      clearTimer();
-      state.timer = setTimeout(goWatching, 700);
-      return;
-    }
-
-    // Watching / reacting: she catches you.
-    if (state.scores[player] > 0) {
-      state.scores[player] -= 1;
-      state.purse += 1;
-    }
-    renderScores();
-    setPose("caught");
-    setStatus("react", player === "p1" ? "😈 玩家 1 被捉住！" : "😈 玩家 2 被捉住！");
-    bump(girlFrame, "shake");
-    freezePlayer(player);
-    state.phase = "react";
-    clearTimer();
-    state.timer = setTimeout(goWatching, 900);
-  }
-
-  function bindSteal(btn, player) {
-    function fire(e) {
-      if (e.button && e.button !== 0) return;
-      trySteal(player);
-    }
-    btn.addEventListener("pointerdown", fire);
-    btn.addEventListener("click", fire);
-    btn.addEventListener("contextmenu", function (e) { e.preventDefault(); });
-  }
-
   function runCountdown(then) {
-    state.phase = "countdown";
-    syncButtons();
     var steps = ["3", "2", "1", "偷！"];
     var i = 0;
     countEl.hidden = false;
@@ -243,55 +307,48 @@
       bump(countEl, "pop");
       i += 1;
       if (i < steps.length) {
-        setTimeout(tick, 700);
+        setTimeout(tick, 650);
       } else {
         setTimeout(function () {
           countEl.hidden = true;
           then();
-        }, 450);
+        }, 400);
       }
     }
     tick();
   }
 
   function resetMatch() {
-    clearTimer();
-    ["p1", "p2"].forEach(function (p) {
-      if (state.freezeTimers[p]) clearTimeout(state.freezeTimers[p]);
-      state.frozen[p] = false;
-    });
-    btnP1.classList.remove("frozen");
-    btnP2.classList.remove("frozen");
-    btnP1.querySelector(".dh-steal-action").textContent = "偷鑽石！";
-    btnP2.querySelector(".dh-steal-action").textContent = "偷鑽石！";
-    state.scores = { p1: 0, p2: 0 };
-    state.purse = PURSE_START;
-    state.stolenThisWindow = false;
+    stopLoop();
+    clearTimeout(state.poseTimer);
+    handEl.hidden = true;
+    fallEl.innerHTML = "";
+    state.scores = { player: 0, hacher: 0 };
+    state.gems = [];
+    state.noticing = null;
+    state.lastTs = 0;
     renderScores();
-    setPose("watching");
-    setStatus("watching", "👀 準備…");
-    syncButtons();
+    setPose("watching", "我嘅鑽石～唔准偷！");
+  }
+
+  function startPlay() {
+    state.phase = "play";
+    setPose("distracted", LINES.idle);
+    state.spawnAt = performance.now();
+    state.lastTs = 0;
+    state.raf = requestAnimationFrame(loop);
   }
 
   function startMatch() {
     startOverlay.hidden = true;
     resultOverlay.hidden = true;
     resetMatch();
-    runCountdown(goWatching);
+    state.phase = "countdown";
+    runCountdown(startPlay);
   }
 
-  bindSteal(btnP1, "p1");
-  bindSteal(btnP2, "p2");
-
-  document.addEventListener("keydown", function (e) {
-    if (e.repeat) return;
-    if (e.code === "KeyA" || e.code === "KeyQ") trySteal("p1");
-    if (e.code === "KeyL" || e.code === "KeyP") trySteal("p2");
-  });
-
-  btnStart.addEventListener("click", startMatch);
-  btnPlayAgain.addEventListener("click", startMatch);
+  document.getElementById("btnStart").addEventListener("click", startMatch);
+  document.getElementById("btnPlayAgain").addEventListener("click", startMatch);
 
   renderScores();
-  syncButtons();
 })();
