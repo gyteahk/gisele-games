@@ -29,8 +29,8 @@
   var startOverlay = document.getElementById("startOverlay");
   var resultOverlay = document.getElementById("resultOverlay");
   var resultArt = document.getElementById("resultArt");
-  var resultTitle = document.getElementById("resultTitle");
   var resultMsg = document.getElementById("resultMsg");
+  var btnPlayAgain = document.getElementById("btnPlayAgain");
   var countEl = document.getElementById("dhCount");
   var gemsYou = document.getElementById("gemsYou");
   var gemsGirl = document.getElementById("gemsGirl");
@@ -267,11 +267,20 @@
     if (state.item) removeItem(state.item);
     var playerWon = winner === "player";
     setPose(playerWon ? "angry" : "caught", playerWon ? LINES.steal : LINES.grabGem);
-    resultArt.src = playerWon ? "/static/img/art/win.jpg" : "/static/img/art/lose.jpg";
-    resultArt.alt = playerWon ? "贏咗！" : "下次一定得！";
-    resultTitle.textContent = playerWon ? "你贏咗！" : "Hacher 贏咗！";
-    resultMsg.textContent = "你  " + state.scores.player + " 粒  ·  Hacher  " + state.scores.hacher + " 粒　計分緊…";
+    showResult(playerWon, winner);
+  }
+
+  function showResult(won, winner) {
     resultOverlay.hidden = false;
+    if (won) {
+      resultArt.src = "/static/img/art/win.jpg";
+      resultArt.alt = "贏咗！";
+      resultMsg.textContent = "你偷到 10 粒鑽石！計分緊…";
+    } else {
+      resultArt.src = "/static/img/art/lose.jpg";
+      resultArt.alt = "下次一定得！";
+      resultMsg.textContent = "Hacher 執到 10 粒鑽石，再嚟一局！";
+    }
 
     fetch("/api/diamond-hacher/finish", {
       method: "POST",
@@ -285,16 +294,14 @@
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        var text = "你  " + state.scores.player + " 粒  ·  Hacher  " + state.scores.hacher + " 粒";
-        if (typeof data.points_awarded === "number") text += "　+" + data.points_awarded + " 分";
+        if (!won) return;
+        var text = resultMsg.textContent.replace("計分緊…", "+" + data.points_awarded + " 分");
         if (data.new_badges && data.new_badges.length) text += " · 新徽章 " + data.new_badges.join(" ");
         resultMsg.textContent = text;
         var chip = document.querySelector(".points-chip");
         if (chip && typeof data.total_points === "number") chip.textContent = "⭐ " + data.total_points;
       })
-      .catch(function () {
-        resultMsg.textContent = "你  " + state.scores.player + " 粒  ·  Hacher  " + state.scores.hacher + " 粒";
-      });
+      .catch(function () {});
   }
 
   function runCountdown(then) {
@@ -347,7 +354,7 @@
   }
 
   document.getElementById("btnStart").addEventListener("click", startMatch);
-  document.getElementById("btnPlayAgain").addEventListener("click", startMatch);
+  btnPlayAgain.addEventListener("click", startMatch);
 
   renderScores();
 })();
