@@ -2,7 +2,6 @@
   "use strict";
 
   var GOAL = 10;
-  var MAX_LIVE = 3;
   var POSES = {
     watching: "/static/img/diamond_hacher/watching.jpg",
     distracted: "/static/img/diamond_hacher/distracted.jpg",
@@ -10,11 +9,14 @@
     caught: "/static/img/diamond_hacher/caught.jpg"
   };
   var LINES = {
-    idle: "啦啦啦～鑽石好閃呀",
-    drop: "哎呀手袋漏咗！",
+    idle: "我嘅鑽石～唔准偷！",
+    dropGem: "哎呀手袋漏咗一粒！",
+    dropRock: "咦？跌咗啲咩出嚟…",
     steal: "哼！還我鑽石！",
-    notice: "呢粒係我嘅！",
-    grab: "嘿嘿，執返啦！"
+    notice: "呢件係我嘅！",
+    grabGem: "嘿嘿，執返啦！",
+    grabRock: "哼，原來係石頭！",
+    tapRock: "哈哈，你撳咗石頭！"
   };
 
   var scene = document.getElementById("dhScene");
@@ -38,9 +40,8 @@
   var state = {
     phase: "idle",
     scores: { player: 0, hacher: 0 },
-    gems: [],
-    noticing: null,
-    nextId: 1,
+    item: null,
+    noticing: false,
     raf: 0,
     lastTs: 0,
     spawnAt: 0,
@@ -84,158 +85,162 @@
     renderGems(gemsGirl, state.scores.hacher, who === "hacher");
   }
 
-  function liveCount() {
-    var n = 0;
-    for (var i = 0; i < state.gems.length; i++) if (!state.gems[i].claimed) n++;
-    return n;
+  function placeItem(it) {
+    it.el.style.left = it.x + "%";
+    it.el.style.top = it.y + "%";
   }
 
-  function placeGem(g) {
-    g.el.style.left = g.x + "%";
-    g.el.style.top = g.y + "%";
-  }
-
-  function spawnDiamond(now) {
-    if (state.phase !== "play") return;
-    if (liveCount() >= MAX_LIVE) return;
+  function spawnItem(now) {
+    if (state.phase !== "play" || state.item) return;
+    var isRock = Math.random() < 0.32;
+    var slow = Math.random() < 0.5;
     var el = document.createElement("button");
     el.type = "button";
-    el.className = "dh-gem-fall";
-    el.setAttribute("aria-label", "偷呢粒鑽石");
-    el.innerHTML = '<span class="dh-gem-shape"></span>';
+    el.className = "dh-item" + (isRock ? " rock" : " gem");
+    el.setAttribute("aria-label", isRock ? "石頭，唔好撳" : "偷呢粒鑽石");
+    el.innerHTML = isRock
+      ? '<span class="dh-rock-shape"></span>'
+      : '<span class="dh-gem-shape"></span>';
     fallEl.appendChild(el);
 
-    var noticeIn = rand(700, 1500);
-    var g = {
-      id: state.nextId++,
+    var noticeIn = slow ? rand(1800, 3000) : rand(800, 1400);
+    var it = {
       el: el,
-      x: rand(28, 72),
-      y: 34,
-      vx: rand(-10, 10),
-      vy: rand(20, 32),
-      wobble: rand(0, Math.PI * 2),
-      born: now,
+      kind: isRock ? "rock" : "diamond",
+      x: rand(46, 62),
+      y: 36,
+      vx: rand(-4, 6),
+      vy: rand(14, 20),
+      landed: false,
       noticeAt: now + noticeIn,
-      grabAt: now + noticeIn + rand(320, 520),
-      claimed: null
+      grabAt: now + noticeIn + rand(450, 750),
+      claimed: false
     };
     el.addEventListener("pointerdown", function (e) {
       e.preventDefault();
       e.stopPropagation();
-      trySteal(g);
+      tapItem(it);
     });
     el.addEventListener("click", function (e) {
       e.preventDefault();
-      trySteal(g);
+      tapItem(it);
     });
-    state.gems.push(g);
-    placeGem(g);
+    state.item = it;
+    state.noticing = false;
+    placeItem(it);
     girlWrap.classList.add("dropping");
     setTimeout(function () { girlWrap.classList.remove("dropping"); }, 360);
-    if (state.noticing == null) setPose("distracted", LINES.drop);
+    setPose("distracted", isRock ? LINES.dropRock : LINES.dropGem);
     bump(girlFrame, "pop");
   }
 
-  function flyAway(g, toX, toY, then) {
-    g.el.classList.add("claimed");
-    g.el.style.left = toX;
-    g.el.style.top = toY;
-    g.el.style.opacity = "0";
-    g.el.style.transform = "translate(-50%, -50%) scale(0.2)";
-    setTimeout(function () {
-      if (g.el && g.el.parentNode) g.el.parentNode.removeChild(g.el);
-      if (then) then();
-    }, 360);
+  function removeItem(it) {
+    if (it.el && it.el.parentNode) it.el.parentNode.removeChild(it.el);
+    if (state.item === it) state.item = null;
+    state.noticing = false;
+    handEl.hidden = true;
   }
 
-  function award(who, g) {
-    if (g.claimed || state.phase !== "play") return;
-    g.claimed = who;
-    if (state.noticing === g) {
-      state.noticing = null;
-      handEl.hidden = true;
-    }
-    g.el.classList.remove("noticed");
-    state.scores[who] += 1;
-    renderScores(who);
-
-    if (who === "player") {
-      setPose("angry", LINES.steal);
-      bump(girlFrame, "shake");
-      flyAway(g, "8%", "8%");
-    } else {
-      setPose("caught", LINES.grab);
-      bump(girlFrame, "pop");
-      flyAway(g, "50%", "16%");
-    }
+  function afterItem(now, delay) {
     clearTimeout(state.poseTimer);
     state.poseTimer = setTimeout(function () {
-      if (state.phase === "play" && !state.noticing) setPose("distracted", LINES.idle);
-    }, 650);
+      if (state.phase !== "play") return;
+      setPose("watching", LINES.idle);
+    }, 700);
+    state.spawnAt = (now || performance.now()) + delay;
+  }
 
+  function score(who) {
+    state.scores[who] += 1;
+    renderScores(who);
     if (state.scores[who] >= GOAL) finishGame(who);
   }
 
-  function trySteal(g) {
-    if (state.phase !== "play" || g.claimed) return;
-    award("player", g);
+  function flyAway(it, toX, toY) {
+    it.el.classList.add("claimed");
+    it.el.style.left = toX;
+    it.el.style.top = toY;
+    it.el.style.opacity = "0";
+    it.el.style.transform = "translate(-50%, -50%) scale(0.2)";
+    setTimeout(function () { removeItem(it); }, 380);
   }
 
-  function girlGrab(g) {
-    if (state.phase !== "play" || g.claimed) return;
-    award("hacher", g);
+  function tapItem(it) {
+    if (state.phase !== "play" || !it || it.claimed) return;
+    it.claimed = true;
+    it.el.classList.remove("noticed");
+    if (it.kind === "diamond") {
+      setPose("angry", LINES.steal);
+      bump(girlFrame, "shake");
+      flyAway(it, "10%", "10%");
+      score("player");
+      afterItem(performance.now(), 1100);
+      return;
+    }
+    setPose("caught", LINES.tapRock);
+    bump(girlFrame, "pop");
+    flyAway(it, "50%", "55%");
+    afterItem(performance.now(), 1300);
   }
 
-  function updateHand(g) {
-    if (!g || g.claimed) {
+  function girlGrab(it) {
+    if (state.phase !== "play" || !it || it.claimed) return;
+    it.claimed = true;
+    it.el.classList.remove("noticed");
+    if (it.kind === "diamond") {
+      setPose("caught", LINES.grabGem);
+      bump(girlFrame, "pop");
+      flyAway(it, "50%", "42%");
+      score("hacher");
+      afterItem(performance.now(), 1100);
+      return;
+    }
+    setPose("angry", LINES.grabRock);
+    bump(girlFrame, "shake");
+    flyAway(it, "50%", "42%");
+    afterItem(performance.now(), 1300);
+  }
+
+  function updateHand(it) {
+    if (!it || it.claimed || !state.noticing) {
       handEl.hidden = true;
       return;
     }
     handEl.hidden = false;
     var rect = scene.getBoundingClientRect();
     var girlRect = girlFrame.getBoundingClientRect();
-    var gx = ((girlRect.left + girlRect.width / 2) - rect.left) / rect.width * 100;
-    var gy = ((girlRect.bottom) - rect.top) / rect.height * 100;
-    var t = 0.72;
-    handEl.style.left = gx + (g.x - gx) * t + "%";
-    handEl.style.top = gy + (g.y - gy) * t + "%";
+    var gx = ((girlRect.left + girlRect.width * 0.62) - rect.left) / rect.width * 100;
+    var gy = ((girlRect.top + girlRect.height * 0.55) - rect.top) / rect.height * 100;
+    handEl.style.left = gx + (it.x - gx) * 0.55 + "%";
+    handEl.style.top = gy + (it.y - gy) * 0.55 + "%";
   }
 
-  function updateDiamonds(now, dt) {
-    var noticing = state.noticing;
-    if (noticing && noticing.claimed) {
-      state.noticing = null;
-      noticing = null;
+  function updateItem(now, dt) {
+    var it = state.item;
+    if (!it || it.claimed) {
       handEl.hidden = true;
+      return;
     }
-
-    for (var i = 0; i < state.gems.length; i++) {
-      var g = state.gems[i];
-      if (g.claimed) continue;
-      g.wobble += dt * 3;
-      g.x += (g.vx + Math.sin(g.wobble) * 6) * dt;
-      g.y += g.vy * dt;
-      if (g.x < 10) { g.x = 10; g.vx = Math.abs(g.vx); }
-      if (g.x > 90) { g.x = 90; g.vx = -Math.abs(g.vx); }
-      placeGem(g);
-
-      if (!noticing && now >= g.noticeAt) {
-        noticing = g;
-        state.noticing = g;
-        g.el.classList.add("noticed");
-        setPose("watching", LINES.notice);
+    if (!it.landed) {
+      it.x += it.vx * dt;
+      it.y += it.vy * dt;
+      if (it.x < 28) { it.x = 28; it.vx = Math.abs(it.vx); }
+      if (it.x > 78) { it.x = 78; it.vx = -Math.abs(it.vx); }
+      if (it.y >= 78) {
+        it.y = 78;
+        it.landed = true;
+        it.vx = 0;
+        it.vy = 0;
       }
-
-      if (now >= g.grabAt || g.y >= 88) {
-        girlGrab(g);
-      }
+      placeItem(it);
     }
-
-    updateHand(state.noticing && !state.noticing.claimed ? state.noticing : null);
-
-    state.gems = state.gems.filter(function (g) {
-      return !g.claimed || g.el.parentNode;
-    });
+    if (!state.noticing && now >= it.noticeAt) {
+      state.noticing = true;
+      it.el.classList.add("noticed");
+      setPose("watching", LINES.notice);
+    }
+    if (now >= it.grabAt) girlGrab(it);
+    updateHand(it);
   }
 
   function loop(ts) {
@@ -243,12 +248,9 @@
     if (!state.lastTs) state.lastTs = ts;
     var dt = Math.min(0.05, (ts - state.lastTs) / 1000);
     state.lastTs = ts;
-    updateDiamonds(ts, dt);
+    updateItem(ts, dt);
     if (state.phase !== "play") return;
-    if (ts >= state.spawnAt) {
-      spawnDiamond(ts);
-      state.spawnAt = ts + rand(750, 1400);
-    }
+    if (!state.item && ts >= state.spawnAt) spawnItem(ts);
     state.raf = requestAnimationFrame(loop);
   }
 
@@ -262,12 +264,9 @@
     state.phase = "over";
     stopLoop();
     handEl.hidden = true;
-    state.gems.forEach(function (g) {
-      if (g.el && g.el.parentNode) g.el.parentNode.removeChild(g.el);
-    });
-    state.gems = [];
+    if (state.item) removeItem(state.item);
     var playerWon = winner === "player";
-    setPose(playerWon ? "angry" : "caught", playerWon ? LINES.steal : LINES.grab);
+    setPose(playerWon ? "angry" : "caught", playerWon ? LINES.steal : LINES.grabGem);
     resultArt.src = playerWon ? "/static/img/art/win.jpg" : "/static/img/art/lose.jpg";
     resultArt.alt = playerWon ? "贏咗！" : "下次一定得！";
     resultTitle.textContent = playerWon ? "你贏咗！" : "Hacher 贏咗！";
@@ -324,17 +323,17 @@
     handEl.hidden = true;
     fallEl.innerHTML = "";
     state.scores = { player: 0, hacher: 0 };
-    state.gems = [];
-    state.noticing = null;
+    state.item = null;
+    state.noticing = false;
     state.lastTs = 0;
     renderScores();
-    setPose("watching", "我嘅鑽石～唔准偷！");
+    setPose("watching", LINES.idle);
   }
 
   function startPlay() {
     state.phase = "play";
     setPose("distracted", LINES.idle);
-    state.spawnAt = performance.now();
+    state.spawnAt = performance.now() + 400;
     state.lastTs = 0;
     state.raf = requestAnimationFrame(loop);
   }

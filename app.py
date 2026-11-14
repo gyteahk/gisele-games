@@ -153,7 +153,7 @@ GAMES = [
         "key": "diamond_hacher",
         "endpoint": "play_diamond_hacher",
         "title": "Diamond Hacher",
-        "desc": "Hacher 手袋漏出閃閃鑽石！快啲撳住偷走，唔好俾佢執返。第一個到10粒就贏！",
+        "desc": "Hacher 企喺度，手袋一次跌一件：鑽石快啲偷，石頭唔好撳。同佢搶快，第一個到10粒贏！",
         "tags": ["對戰電腦", "眼明手快"],
         "cover": "diamond_hacher_cover.jpg",
     },

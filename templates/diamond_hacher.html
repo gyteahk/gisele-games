@@ -24,7 +24,7 @@
     <div class="title dh-title">DIAMOND<br><span class="accent">HACHER</span></div>
   </div>
 
-  <p class="hint dh-rules">鑽石由手袋跌出嚟，快啲撳住偷走！Hacher 執得快過你，就係佢嘅。第一個到 <strong>10</strong> 粒贏。</p>
+  <p class="hint dh-rules">手袋一次跌一件：<strong>鑽石</strong>就快啲撳走，<strong>石頭</strong>唔好撳。Hacher 有時執得快、有時慢。第一個到 <strong>10</strong> 粒鑽石贏。</p>
 
   <div class="dh-scores">
     <div class="dh-score p1" id="scoreYou">
@@ -47,6 +47,7 @@
     <div class="dh-sparkle s3"></div>
     <div class="dh-sparkle s4"></div>
     <div class="dh-sparkle s5"></div>
+    <div class="dh-fall" id="dhFall"></div>
     <div class="dh-girl-wrap" id="dhGirlWrap">
       <div class="dh-bubble" id="dhBubble">我嘅鑽石～唔准偷！</div>
       <div class="dh-girl-frame" id="dhGirlFrame">
@@ -54,7 +55,6 @@
       </div>
     </div>
     <div class="dh-hand" id="dhHand" hidden></div>
-    <div class="dh-fall" id="dhFall"></div>
     <div class="dh-floor"></div>
   </div>
 </div>
@@ -63,7 +63,7 @@
   <div class="win-card welcome-card">
     <img class="welcome-art" src="{{ url_for('static', filename='img/covers/diamond_hacher_cover.jpg') }}" alt="Diamond Hacher">
     <h2>偷走 Hacher 嘅鑽石！</h2>
-    <p>手袋漏出閃閃鑽石，快啲撳住跌緊嗰粒！你快過佢就偷到；佢先執到就係佢嘅。第一個到 10 粒贏。</p>
+    <p>佢企喺度，手袋一次跌一件落地下。見到鑽石就撳走；見到石頭就唔好撳。你同佢搶快，第一個到 10 粒鑽石贏。</p>
     <div class="win-actions">
       <button type="button" class="btn coral" id="btnStart"><span>開始偷！</span></button>
       <a class="btn ghost small" href="{{ url_for('index') }}"><span>返去主頁</span></a>

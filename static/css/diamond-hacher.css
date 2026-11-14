@@ -87,28 +87,29 @@
 
 .dh-girl-wrap{
   position:absolute;
-  top:6px; left:50%;
+  left:50%;
+  bottom:11%;
   transform:translateX(-50%);
-  z-index:4;
+  z-index:5;
   display:flex; flex-direction:column; align-items:center;
   pointer-events:none;
 }
 .dh-bubble{
-  font-weight:800; font-size:13px; color:var(--ink);
+  font-weight:800; font-size:clamp(13px,2.4vw,16px); color:var(--ink);
   background:var(--panel); border:2.5px solid var(--ink);
   border-radius:16px 16px 16px 4px;
-  padding:5px 11px; margin-bottom:6px;
+  padding:6px 12px; margin-bottom:8px;
   box-shadow:2px 2px 0 rgba(26,18,53,0.12);
   white-space:nowrap;
 }
 .dh-girl-frame{
-  width:min(34vw, 148px);
+  width:min(72vw, 320px);
   aspect-ratio:1;
   border-radius:50%;
   overflow:hidden;
   border:4px solid var(--ink);
   background:#9ee5d8;
-  box-shadow:4px 4px 0 rgba(26,18,53,0.18), 0 0 18px rgba(255,201,60,0.35);
+  box-shadow:5px 5px 0 rgba(26,18,53,0.18), 0 0 22px rgba(255,201,60,0.4);
 }
 .dh-girl-frame img{
   width:100%; height:100%;
@@ -131,7 +132,8 @@
 }
 .dh-hand[hidden]{display:none;}
 
-.dh-fall{position:absolute; inset:0; z-index:8;}
+.dh-fall{position:absolute; inset:0; z-index:8; pointer-events:none;}
+.dh-fall .dh-item{pointer-events:auto;}
 
 .dh-floor{
   position:absolute; left:0; right:0; bottom:0; height:14%;
@@ -142,10 +144,10 @@
   pointer-events:none; z-index:3;
 }
 
-.dh-gem-fall{
+.dh-item{
   position:absolute;
-  width:clamp(56px, 14vw, 76px);
-  height:clamp(56px, 14vw, 76px);
+  width:clamp(72px, 18vw, 100px);
+  height:clamp(72px, 18vw, 100px);
   margin:0;
   border:0; padding:0;
   background:transparent;
@@ -163,15 +165,23 @@
   filter:drop-shadow(0 0 10px rgba(126,240,255,0.85));
   animation:dhSpin 2.8s linear infinite, dhTwinkle 0.9s ease-in-out infinite;
 }
-.dh-gem-fall.noticed .dh-gem-shape{
+.dh-rock-shape{
+  display:block; width:82%; height:68%;
+  margin:18% auto 0;
+  background:linear-gradient(145deg, #d7c4a8 0%, #8a7358 42%, #4a3b2c 100%);
+  border-radius:46% 54% 48% 52%;
+  box-shadow:inset -6px -8px 0 rgba(26,18,53,0.18), 3px 4px 0 rgba(26,18,53,0.25);
+}
+.dh-item.noticed .dh-gem-shape{
   filter:drop-shadow(0 0 12px rgba(255,93,115,0.95));
   animation:dhSpin 1.1s linear infinite;
-  outline:3px solid var(--pop-coral);
-  outline-offset:2px;
 }
-.dh-gem-fall.claimed{
+.dh-item.noticed .dh-rock-shape{
+  box-shadow:inset -6px -8px 0 rgba(26,18,53,0.18), 0 0 12px rgba(255,93,115,0.7);
+}
+.dh-item.claimed{
   pointer-events:none;
-  transition:transform .35s ease, opacity .35s ease;
+  transition:left .35s ease, top .35s ease, transform .35s ease, opacity .35s ease;
 }
 
 .dh-count{
@@ -231,8 +241,8 @@
   .dh-page .hero{padding:2px 0 0;}
   .dh-rules{margin-bottom:6px;}
   .dh-scores{margin-bottom:6px;}
-  .dh-scene{height:min(68vh, 420px); min-height:240px; margin-bottom:10px;}
-  .dh-girl-frame{width:min(18vw, 112px);}
+  .dh-scene{height:min(72vh, 460px); min-height:260px; margin-bottom:10px;}
+  .dh-girl-frame{width:min(32vw, 240px);}
 }
 
 @media (max-height: 740px){
