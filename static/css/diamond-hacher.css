@@ -88,10 +88,11 @@
 .dh-girl-wrap{
   position:absolute;
   left:50%;
-  bottom:11%;
+  bottom:8%;
+  height:84%;
   transform:translateX(-50%);
   z-index:5;
-  display:flex; flex-direction:column; align-items:center;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
   pointer-events:none;
 }
 .dh-bubble{
@@ -101,20 +102,26 @@
   padding:6px 12px; margin-bottom:8px;
   box-shadow:2px 2px 0 rgba(26,18,53,0.12);
   white-space:nowrap;
+  flex-shrink:0;
 }
 .dh-girl-frame{
-  width:min(72vw, 320px);
-  aspect-ratio:1;
-  border-radius:50%;
-  overflow:hidden;
-  border:4px solid var(--ink);
-  background:#9ee5d8;
-  box-shadow:5px 5px 0 rgba(26,18,53,0.18), 0 0 22px rgba(255,201,60,0.4);
+  height:calc(100% - 44px);
+  width:auto;
+  max-width:min(70vw, 340px);
+  background:transparent;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  overflow:visible;
 }
 .dh-girl-frame img{
-  width:100%; height:100%;
-  object-fit:cover; object-position:center 12%;
+  height:100%;
+  width:auto;
+  max-width:100%;
+  object-fit:contain;
+  object-position:bottom center;
   display:block;
+  filter:drop-shadow(3px 5px 0 rgba(26,18,53,0.18));
 }
 .dh-girl-frame.pop{animation:dhPop .3s ease;}
 .dh-girl-frame.shake{animation:dhShake .4s ease;}
@@ -242,7 +249,7 @@
   .dh-rules{margin-bottom:6px;}
   .dh-scores{margin-bottom:6px;}
   .dh-scene{height:min(72vh, 460px); min-height:260px; margin-bottom:10px;}
-  .dh-girl-frame{width:min(32vw, 240px);}
+  .dh-girl-frame{max-width:min(38vw, 260px);}
 }
 
 @media (max-height: 740px){

@@ -3,10 +3,10 @@
 
   var GOAL = 10;
   var POSES = {
-    watching: "/static/img/diamond_hacher/watching.jpg",
-    distracted: "/static/img/diamond_hacher/distracted.jpg",
-    angry: "/static/img/diamond_hacher/angry.jpg",
-    caught: "/static/img/diamond_hacher/caught.jpg"
+    watching: "/static/img/diamond_hacher/watching.png",
+    distracted: "/static/img/diamond_hacher/distracted.png",
+    angry: "/static/img/diamond_hacher/angry.png",
+    caught: "/static/img/diamond_hacher/caught.png"
   };
   var LINES = {
     idle: "我嘅鑽石～唔准偷！",
