@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Diamond Hacher</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#7B5CFF">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/diamond-hacher.css') }}">
+</head>
+<body class="dh-page">
+<nav class="nav">
+  <a class="brand" href="{{ url_for('index') }}">✨ Gisele's<span class="dot">Games</span></a>
+  <div class="nav-right">
+    <a class="points-chip" href="{{ url_for('leaderboard') }}">⭐ {{ points }}</a>
+    <a class="nav-link" href="{{ url_for('logout') }}">登出</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-burst"></div>
+    <div class="title dh-title">DIAMOND<br><span class="accent">HACHER</span></div>
+  </div>
+
+  <p class="hint dh-rules">手袋一次跌一件：<strong>鑽石</strong>就快啲撳走，<strong>石頭</strong>唔好撳。Hacher 有時執得快、有時慢。第一個到 <strong>10</strong> 粒鑽石贏。</p>
+
+  <div class="dh-scores">
+    <div class="dh-score p1" id="scoreYou">
+      <div class="dh-score-name">你</div>
+      <div class="dh-gems" id="gemsYou"></div>
+      <div class="dh-score-num"><span id="countYou">0</span>/10</div>
+    </div>
+    <div class="dh-vs">VS</div>
+    <div class="dh-score p2" id="scoreGirl">
+      <div class="dh-score-name">Hacher</div>
+      <div class="dh-gems" id="gemsGirl"></div>
+      <div class="dh-score-num"><span id="countGirl">0</span>/10</div>
+    </div>
+  </div>
+
+  <div class="dh-scene" id="dhScene">
+    <div class="dh-sky"></div>
+    <div class="dh-sparkle s1"></div>
+    <div class="dh-sparkle s2"></div>
+    <div class="dh-sparkle s3"></div>
+    <div class="dh-sparkle s4"></div>
+    <div class="dh-sparkle s5"></div>
+    <div class="dh-fall" id="dhFall"></div>
+    <div class="dh-girl-wrap" id="dhGirlWrap">
+      <div class="dh-bubble" id="dhBubble">我嘅鑽石～唔准偷！</div>
+      <div class="dh-girl-frame" id="dhGirlFrame">
+        <img id="dhGirl" src="{{ url_for('static', filename='img/diamond_hacher/watching.png') }}" alt="Hacher 同佢嘅鑽石手袋">
+      </div>
+    </div>
+    <div class="dh-hand" id="dhHand" hidden></div>
+    <div class="dh-floor"></div>
+  </div>
+</div>
+
+<div class="win-overlay" id="startOverlay">
+  <div class="win-card welcome-card">
+    <img class="welcome-art" src="{{ url_for('static', filename='img/covers/diamond_hacher_cover.jpg') }}" alt="Diamond Hacher">
+    <h2>偷走 Hacher 嘅鑽石！</h2>
+    <p>佢企喺度，手袋一次跌一件落地下。見到鑽石就撳走；見到石頭就唔好撳。你同佢搶快，第一個到 10 粒鑽石贏。</p>
+    <div class="win-actions">
+      <button type="button" class="btn coral" id="btnStart"><span>開始偷！</span></button>
+      <a class="btn ghost small" href="{{ url_for('index') }}"><span>返去主頁</span></a>
+    </div>
+  </div>
+</div>
+
+<div class="dh-count" id="dhCount" hidden>3</div>
+
+<div class="win-overlay" id="resultOverlay" hidden>
+  <div class="win-card welcome-card">
+    <img class="welcome-art" id="resultArt" src="{{ url_for('static', filename='img/art/win.jpg') }}" alt="贏咗！">
+    <h2 id="resultTitle">你贏咗！</h2>
+    <p id="resultMsg">計分緊…</p>
+    <div class="win-actions">
+      <button type="button" class="btn coral" id="btnPlayAgain"><span>再嚟一局</span></button>
+      <a class="btn ghost small" href="{{ url_for('index') }}"><span>返去主頁</span></a>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/diamond-hacher.js') }}"></script>
+<script src="{{ url_for('static', filename='js/register-sw.js') }}"></script>
+</body>
+</html>

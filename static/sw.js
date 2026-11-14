@@ -1,4 +1,4 @@
-var CACHE_NAME = "gisele-games-v6";
+var CACHE_NAME = "gisele-games-v11";
 
 var PRECACHE_URLS = [
   "/static/css/style.css",
@@ -7,17 +7,24 @@ var PRECACHE_URLS = [
   "/static/css/operation.css",
   "/static/css/tictactoe.css",
   "/static/css/spot-diff.css",
+  "/static/css/diamond-hacher.css",
   "/static/js/maze.js",
   "/static/js/guess-words.js",
   "/static/js/operation.js",
   "/static/js/tictactoe.js",
   "/static/js/spot-diff.js",
   "/static/js/spot-diff-data.js",
+  "/static/js/diamond-hacher.js",
   "/static/img/covers/maze_cover.png",
   "/static/img/covers/guess_word_cover.png",
   "/static/img/covers/operation_cover.jpg",
   "/static/img/covers/tictactoe_cover.png",
   "/static/img/covers/spot_diff_cover.png",
+  "/static/img/covers/diamond_hacher_cover.jpg",
+  "/static/img/diamond_hacher/watching.png",
+  "/static/img/diamond_hacher/distracted.png",
+  "/static/img/diamond_hacher/angry.png",
+  "/static/img/diamond_hacher/caught.png",
   "/static/img/ttt_avatars/easy_bunny.png",
   "/static/img/ttt_avatars/medium_fox.png",
   "/static/img/ttt_avatars/hard_dragon.png",

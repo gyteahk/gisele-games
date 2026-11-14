@@ -91,6 +91,9 @@ TTT_DIFFICULTIES = set(TTT_POINTS)
 SPOT_MAX_STRIKES = 3
 SPOT_DIFF_COUNT = 5
 
+DIAMOND_HACHER_POINTS = 12
+DIAMOND_HACHER_GOAL = 10
+
 BADGE_LABELS = {
     "first_win": "🎉 初次過關",
     "maze_hard_win": "🌀 攻破高難度迷宮",
@@ -102,6 +105,7 @@ BADGE_LABELS = {
     "fox_outsmarted": "🦊 打敗聰明狐狸",
     "dragon_tamer": "🐉 馴服神級小龍",
     "eagle_eye": "🦅 鷹眼搜查",
+    "diamond_thief": "💎 偷鑽高手",
 }
 
 GAMES = [
@@ -144,6 +148,14 @@ GAMES = [
         "desc": "兩張圖睇落一樣，其實藏住5個唔同！揾晒佢哋，睇下你嘅眼力夠唔夠尖。",
         "tags": ["觀察力", "眼明手快"],
         "cover": "spot_diff_cover.png",
+    },
+    {
+        "key": "diamond_hacher",
+        "endpoint": "play_diamond_hacher",
+        "title": "Diamond Hacher",
+        "desc": "Hacher 企喺度，手袋一次跌一件：鑽石快啲偷，石頭唔好撳。同佢搶快，第一個到10粒贏！",
+        "tags": ["對戰電腦", "眼明手快"],
+        "cover": "diamond_hacher_cover.jpg",
     },
 ]
 
@@ -573,6 +585,12 @@ def play_spot_diff():
     return render_template("spot_diff.html")
 
 
+@app.route("/games/diamond-hacher")
+@login_required_page
+def play_diamond_hacher():
+    return render_template("diamond_hacher.html")
+
+
 @app.route("/leaderboard")
 @login_required_page
 def leaderboard():
@@ -828,6 +846,60 @@ def api_spot_diff_finish():
         if strikes_left == SPOT_MAX_STRIKES:
             award_badge(db, user["id"], "eagle_eye")
             new_badges.append("eagle_eye")
+
+    return jsonify({
+        "points_awarded": points,
+        "total_points": get_total_points(db, user["id"]),
+        "new_badges": [BADGE_LABELS.get(b, b) for b in new_badges],
+    })
+
+
+@app.route("/api/diamond-hacher/finish", methods=["POST"])
+@login_required_api
+def api_diamond_hacher_finish():
+    data = request.get_json(silent=True) or {}
+    winner = data.get("winner")
+    player_score = data.get("player_score")
+    hacher_score = data.get("hacher_score")
+
+    if winner not in ("player", "hacher"):
+        return jsonify({"error": "bad_winner"}), 400
+    try:
+        player_score = max(0, min(DIAMOND_HACHER_GOAL, int(player_score)))
+        hacher_score = max(0, min(DIAMOND_HACHER_GOAL, int(hacher_score)))
+    except (TypeError, ValueError):
+        return jsonify({"error": "bad_metrics"}), 400
+    if (winner == "player" and player_score < DIAMOND_HACHER_GOAL) or (
+        winner == "hacher" and hacher_score < DIAMOND_HACHER_GOAL
+    ):
+        return jsonify({"error": "winner_score"}), 400
+
+    db = get_db()
+    user = current_user()
+    won = winner == "player"
+    points = DIAMOND_HACHER_POINTS if won else 0
+    is_first_win_ever = won and not has_any_win(db, user["id"])
+
+    db.execute(
+        "INSERT INTO results(user_id, game, difficulty, steps, lives_left, won, points, created_at) "
+        "VALUES (?,?,?,?,?,?,?,?)",
+        (user["id"], "diamond_hacher", winner, player_score, hacher_score, int(won), points, now_iso()),
+    )
+    db.commit()
+
+    new_badges = []
+    if won:
+        award_points(db, user["id"], points, "diamond_hacher_win")
+        if is_first_win_ever:
+            award_badge(db, user["id"], "first_win")
+            new_badges.append("first_win")
+        had_thief = db.execute(
+            "SELECT 1 FROM badges WHERE user_id=? AND badge_key=? LIMIT 1",
+            (user["id"], "diamond_thief"),
+        ).fetchone()
+        award_badge(db, user["id"], "diamond_thief")
+        if not had_thief:
+            new_badges.append("diamond_thief")
 
     return jsonify({
         "points_awarded": points,
